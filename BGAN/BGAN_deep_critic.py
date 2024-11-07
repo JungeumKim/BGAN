@@ -48,10 +48,14 @@ class Critic(nn.Module):
         self.activation = nn.LeakyReLU(leaky)
 
     def forward(self, x, context):
-        f_context = self.ss(context)
-        x = torch.cat([x, f_context], -1)
+
+        #f_context = self.ss(context)# .unsqueeze(-1))
+        #x = torch.cat([x, f_context], -1)
+        #set_trace()
+        x = torch.cat([x, context.squeeze(-1)], -1)
 
         for layer in self.layers[:-1]:
+            #set_trace()
             x = self.dropout(self.activation(layer(x)))
         return self.layers[-1](x)
 
@@ -153,15 +157,17 @@ class DBGAN():
                                    )
         
         self.critic = Critic(dropout = 0,
-                             input_dim=theta_dim,
-                             cond_dim = f1_dim+ f2_dim,
+                             theta_dim=theta_dim,
+                             f1_dim=f1_dim,
+                             f2_dim=f2_dim,
+                             x_dim = x_dim,
                              d_hidden = [d_hidden,d_hidden,d_hidden])
         
-        self.Q = MLP(dim=f1_dim+ f2_dim, z_dim=theta_dim)
+        #self.Q = MLP(dim=f1_dim+ f2_dim, z_dim=theta_dim)
         
         self.np_random = np.random.RandomState(seed)
         self.generator.to(device), self.critic.to(device)
-        self.Q.to(device)
+        #self.Q.to(device)
         self.simulator = simulator
         self.device = device
         self.epoch = epoch
@@ -208,23 +214,22 @@ class DBGAN():
             for iter in range(n_iter):
                 theta, X = self.simulator(batch_size = self.batch_size, np_random = self.np_random)
                 theta, X = theta.to(self.device), X.to(self.device)
-
                 self.generator.zero_grad()
                 self.critic.zero_grad()
-                self.Q.zero_grad()
+                #self.Q.zero_grad()
                 
                 theta_hat = self.generator(X)
                 SS = self.generator.ss(X)
                 
-                critic_theta_hat = self.critic(theta_hat, SS).mean()
-                loss_regul = (self.Q(SS)-theta).pow(2).sum(1).mean()
+                critic_theta_hat = self.critic(theta_hat, X).mean()
+                #loss_regul = (self.Q(SS)-theta).pow(2).sum(1).mean()
                 
 
                 if n_critic < critic_steps:
-                    critic_x = self.critic(theta, SS).mean()
+                    critic_x = self.critic(theta, X).mean()
                     WD = critic_x-critic_theta_hat
-                    loss = -WD + self.w_regul * loss_regul
-                    loss += critic_gp_factor * self.critic.gradient_penalty(theta, theta_hat, SS)
+                    loss = -WD #+ self.w_regul * loss_regul
+                    loss += critic_gp_factor * self.critic.gradient_penalty(theta, theta_hat, X)
                     #loss += critic_gp_factor * gradient_penalty(self.generator.ss, X, X2)
                     loss.backward()
                     
@@ -238,7 +243,7 @@ class DBGAN():
                     n_critic += 1
 
                 else: #generator 1 step.
-                    loss = - critic_theta_hat + self.w_regul * loss_regul
+                    loss = - critic_theta_hat #+ self.w_regul * loss_regul
 
                     loss.backward()
                     

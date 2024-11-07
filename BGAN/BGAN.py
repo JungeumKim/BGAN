@@ -14,8 +14,13 @@ from time import time
 
 class Generator(nn.Module):
 
-    def __init__(self, d_hidden = [128,128,128], theta_dim = 2, z_dim =3, 
-                 cond_dim=2, dropout = 0.1, leaky=0.1):
+    def __init__(self, 
+                 d_hidden = [128,128,128], 
+                 theta_dim = 2, 
+                 z_dim =3, 
+                 cond_dim=2, 
+                 dropout = 0.1, 
+                 leaky=0.1):
         super().__init__()
         self.d_noise = z_dim
         self.theta_dim =theta_dim
