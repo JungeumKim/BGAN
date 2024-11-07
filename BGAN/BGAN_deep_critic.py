@@ -4,8 +4,7 @@ This is code for  Adversarial Bayesian Simulation (Yuexi Wang, Veronika Rockova)
 
 from IPython.core.debugger import set_trace
 from _nets.basic_nets import  MLP,DeepSets,BiRNN
-from BGAN import Critic
-
+#from BGAN import Critic
 import numpy as np
 import torch
 import torch.nn as nn
@@ -24,8 +23,12 @@ def gradient_penalty(net, x, x_hat):
         interpolated = x * alpha + x_hat * (1 - alpha)
         interpolated = torch.autograd.Variable(interpolated.detach(), requires_grad=True)
         output = net(interpolated )
-        gradients = torch.autograd.grad(output, interpolated, torch.ones_like(output),
-                                        retain_graph=True, create_graph=True, only_inputs=True)[0]
+        gradients = torch.autograd.grad(output, 
+                                        interpolated, 
+                                        torch.ones_like(output),
+                                        retain_graph=True, 
+                                        create_graph=True, 
+                                        only_inputs=True)[0]
         penalty = F.relu(gradients.norm(2, dim=1) - 1).mean()             # one-sided
         # penalty = (gradients.norm(2, dim=1) - 1).pow(2).mean()          # two-sided
         return penalty
@@ -49,10 +52,10 @@ class Critic(nn.Module):
 
     def forward(self, x, context):
 
-        #f_context = self.ss(context)# .unsqueeze(-1))
-        #x = torch.cat([x, f_context], -1)
+        f_context = self.ss(context)# .unsqueeze(-1))
+        x = torch.cat([x, f_context], -1)
         #set_trace()
-        x = torch.cat([x, context.squeeze(-1)], -1)
+        #x = torch.cat([x, context.squeeze(-1)], -1)
 
         for layer in self.layers[:-1]:
             #set_trace()
@@ -118,12 +121,15 @@ class Auto_ss(nn.Module):
                                dim_ss=self.f1_dim,
                                factor=factor, 
                                num_layers=f1_layers, 
+                               bn_last=False,# this bn_last=False is a super important argument!!
                                device=device)
         if  self.f2_dim>0:
             self.f2 = BiRNN(input_size=x_dim,
                             hidden_size=512,
                             num_layers=1,
-                            xdim=self.f2_dim)
+                            xdim=self.f2_dim, 
+                            bn_last=False # this bn_last=False is a super important argument!!
+                            )
 
         self.device=device
         self.to(device)
