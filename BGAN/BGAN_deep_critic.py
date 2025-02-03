@@ -150,7 +150,7 @@ class DBGAN():
                  f1_dim=2, f2_dim=5, 
                  device="cuda",epoch=150, batch_size = 200, 
                  seed=1234, d_hidden = 128,
-                 critic_lr = 0.001, generator_lr = 0.001, inner_lr = 0.001,
+                 critic_lr = 0.001, generator_lr = 0.001, #inner_lr = 0.001,
                  lr_decay= 0.99, w_regul = 1.0,Q_freq = 1,
                  *args, **kwargs):
 
@@ -186,7 +186,7 @@ class DBGAN():
         
         self.critic_lr = critic_lr
         self.generator_lr = generator_lr
-        self.inner_lr = inner_lr
+        #self.inner_lr = inner_lr
         self.lr_decay=lr_decay
         self.w_regul = w_regul
         self.Q_freq = Q_freq
