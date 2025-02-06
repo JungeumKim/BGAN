@@ -15,6 +15,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
+import numpy as np
+from sklearn.metrics.pairwise import rbf_kernel
+
+def mmd(X, Y, gamma=1.0):
+    """MMD using RBF kernel (k(x,y) = exp(-gamma * ||x-y||^2 / 2))"""
+    XX = rbf_kernel(X, X, gamma)
+    YY = rbf_kernel(Y, Y, gamma)
+    XY = rbf_kernel(X, Y, gamma)
+    #set_trace()
+    return XX.mean() + YY.mean() - 2 * XY.mean()
 
 def gradient_penalty(net, x, x_hat):
 
@@ -190,8 +200,10 @@ class DBGAN():
         self.lr_decay=lr_decay
         self.w_regul = w_regul
         self.Q_freq = Q_freq
+        self.qualities = []
         
-    def train(self,start_epoch=1, end_epoch=None, critic_gp_factor = 5, critic_steps = 5, n_iter=100):
+    def train(self,true_x=None, true_thetas=None,
+              start_epoch=1, end_epoch=None, critic_gp_factor = 5, critic_steps = 5, n_iter=100):
         
         lr_decay = self.lr_decay
         
@@ -259,7 +271,14 @@ class DBGAN():
             
                     running_loss += loss.item()
                     n_critic = 0 # now, the critic will again be trained.
-
+                    
+                    if true_thetas is not None:
+                        with torch.no_grad():
+                            dist_quality = mmd(true_thetas,self.generator(true_x).cpu())
+                        self.qualities.append({"epoch": epoch, 
+                                               "iter":iter, 
+                                               "mmd":round(dist_quality,3)})
+                        
             WD_train /= n_iter
             self.loss_cum = WD_train
             
