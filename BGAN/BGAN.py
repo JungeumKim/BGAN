@@ -30,7 +30,7 @@ class Generator(nn.Module):
                  theta_dim = 2, 
                  z_dim =3, 
                  cond_dim=2, 
-                 dropout = 0.1, 
+
                  leaky=0.1):
         super().__init__()
         self.d_noise = z_dim
@@ -39,7 +39,7 @@ class Generator(nn.Module):
         d_in = [self.d_noise + self.cond_dim] +d_hidden
         d_out = d_hidden + [theta_dim ]
         self.layers = nn.ModuleList([nn.Linear(i, o) for i, o in zip(d_in, d_out)])
-        self.dropout = nn.Dropout(dropout)
+
         self.activation = nn.LeakyReLU(leaky) 
 
 
@@ -51,26 +51,26 @@ class Generator(nn.Module):
         x = torch.cat([noise, context], -1)
 
         for layer in self.layers:
-                x = self.dropout(self.activation(layer(x)))
+                x = (self.activation(layer(x)))
         return x
 
 
 class Critic(nn.Module):
 
-    def __init__(self,dropout = 0,input_dim=2, cond_dim = 4,d_hidden = [128,128,128], leaky=0.1):
+    def __init__(self,input_dim=2, cond_dim = 4,d_hidden = [128,128,128], leaky=0.1):
 
         super().__init__()
         d_in = [input_dim+cond_dim] + d_hidden
         d_out = d_hidden + [1]
         self.layers = nn.ModuleList([nn.Linear(i, o) for i, o in zip(d_in, d_out)])
-        self.dropout = nn.Dropout(dropout)
+
         self.activation = nn.LeakyReLU(leaky)
 
     def forward(self, x, context):
 
         x = torch.cat([x, context], -1)
         for layer in self.layers[:-1]:
-            x = self.dropout(self.activation(layer(x)))
+            x = (self.activation(layer(x)))
         return self.layers[-1](x)
 
     def gradient_penalty(self, x, x_hat, context):
@@ -97,10 +97,9 @@ class BGAN():
         self.generator = Generator(d_hidden = [d_hidden,d_hidden,d_hidden],
                                    theta_dim = theta_dim,
                                    z_dim = theta_dim,
-                                   cond_dim=x_dim*x_length,
-                                   dropout = 0.1)
+                                   cond_dim=x_dim*x_length)
 
-        self.critic = Critic(dropout = 0,
+        self.critic = Critic(
                              input_dim=theta_dim,
                              cond_dim = x_dim*x_length,
                              d_hidden = [d_hidden,d_hidden,d_hidden])

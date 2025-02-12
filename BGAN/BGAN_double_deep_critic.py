@@ -51,7 +51,7 @@ def gradient_penalty(net, x, x_hat):
 
 class Critic(nn.Module):
 
-    def __init__(self,dropout = 0,theta_dim=2,x_dim=2,  f1_dim=2,f2_dim=2,
+    def __init__(self,theta_dim=2,x_dim=2,  f1_dim=2,f2_dim=2,
                  d_hidden = [128,128,128], leaky=0.1):
 
         super().__init__()
@@ -64,7 +64,7 @@ class Critic(nn.Module):
                                device="cuda")
 
         self.layers = nn.ModuleList([nn.Linear(i, o) for i, o in zip(d_in, d_out)])
-        self.dropout = nn.Dropout(dropout)
+
         self.activation = nn.LeakyReLU(leaky)
 
     def forward(self, x, context):
@@ -76,7 +76,7 @@ class Critic(nn.Module):
 
         for layer in self.layers[:-1]:
             #set_trace()
-            x = self.dropout(self.activation(layer(x)))
+            x = (self.activation(layer(x)))
         return self.layers[-1](x)
 
     def gradient_penalty(self, x, x_hat, context):
@@ -93,7 +93,7 @@ class Critic(nn.Module):
 
 class Generator(nn.Module):
 
-    def __init__(self, x_dim=2, x_length=1, theta_dim = 2,  dropout = 0.1,
+    def __init__(self, x_dim=2, x_length=1, theta_dim = 2,  
                  activation = "relu", f1_dim=2, f2_dim=2, leaky=0.1,
                  d_hidden = [128,128,128]):
         
@@ -113,7 +113,7 @@ class Generator(nn.Module):
         d_in = [self.d_noise + self.d_cond] + d_hidden
         d_out = d_hidden + [theta_dim]
         self.layers = nn.ModuleList([nn.Linear(i, o) for i, o in zip(d_in, d_out)])
-        self.dropout = nn.Dropout(dropout)
+
         self.activation = nn.LeakyReLU(leaky)
 
     def forward(self, context, noise = None):
@@ -126,7 +126,7 @@ class Generator(nn.Module):
         x = torch.cat([noise, f_context], -1)
         #set_trace()
         for layer in self.layers:
-            x = self.dropout(self.activation(layer(x)))
+            x = (self.activation(layer(x)))
         
         return x
 
@@ -144,13 +144,13 @@ class double_DBGAN():
 
         self.generator = Generator(x_dim, x_length,
                                    theta_dim = theta_dim,
-                                   dropout = 0.1,
+
                                    f1_dim=f1_dim, 
                                    f2_dim=f2_dim,
                                    d_hidden = [d_hidden,d_hidden,d_hidden]
                                    )
         
-        self.critic = Critic(dropout = 0,
+        self.critic = Critic(
                              theta_dim=theta_dim,
                              f1_dim=f1_dim,
                              f2_dim=f2_dim,
