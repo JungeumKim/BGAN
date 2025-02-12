@@ -277,7 +277,8 @@ class DBGAN():
                             dist_quality = mmd(true_thetas,self.generator(true_x).cpu())
                         self.qualities.append({"epoch": epoch, 
                                                "iter":iter, 
-                                               "mmd":round(dist_quality,3)})
+                                               "mmd":round(dist_quality,3),
+                                               "loss":round(loss.item(),3)})
                         
             WD_train /= n_iter
             self.loss_cum = WD_train
