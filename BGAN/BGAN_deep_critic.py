@@ -57,6 +57,8 @@ class DBGAN(BGAN):
                  device="cuda",epoch=150, batch_size = 200, 
                  seed=1234, d_hidden = 128,
                  critic_lr = 0.001, generator_lr = 0.001,aggregation=True,
+                 factor=64, f1_layers =3,
+                 common_factor=64,common_layers = 3
                  *args, **kwargs):
         super().__init__(simulator, theta_dim, x_dim, x_length,
                  device=device,epoch=epoch, batch_size = batch_size, d_hidden=d_hidden,
@@ -69,7 +71,9 @@ class DBGAN(BGAN):
                                    f2_dim=f2_dim,
                                    d_hidden = [d_hidden,d_hidden,d_hidden],
                                    aggregation=aggregation,
-                                   x_length=x_length
+                                   x_length=x_length,
+                                   factor=factor, f1_layers =f1_layers,
+                                   common_factor=common_factor,common_layers = common_layers
                                    )
         
         self.critic = Critic(
@@ -79,6 +83,8 @@ class DBGAN(BGAN):
                              x_dim = x_dim,
                              d_hidden = [d_hidden,d_hidden,d_hidden],
                              aggregation=aggregation,
-                             x_length=x_length)
+                             x_length=x_length,
+                             factor=factor, f1_layers =f1_layers,
+                             common_factor=common_factor,common_layers = common_layers)
         self.generator.to(device)        
         self.critic.to(device)
