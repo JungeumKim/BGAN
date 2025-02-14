@@ -37,10 +37,12 @@ class DeepSets(nn.Module):
     def forward(self, x):
         shape = x.shape
         assert len(shape)==3
-        set_trace()
+        #set_trace()
         phi = self.common_feature_net(x.view(-1,shape[-1]))
         if self.aggregation: # == "mean":
             phi = phi.view(x.shape[0],x.shape[1],-1).mean(1)
+        else:
+            phi = phi.view(x.shape[0],-1)
         # ELSE: just side by side output.
         #if self.use_nextnet:
         out = self.next_net(phi)
@@ -66,6 +68,7 @@ class Auto_ss(nn.Module):
                                nextnet_layers=f1_layers,
                                common_factor= common_factor,
                                common_layers = common_layers,aggregation=aggregation,
+                               x_length = x_length,
                                bn_last=False,# this bn_last=False is a super important argument!!
                                device=device)
         if  self.f2_dim>0:
