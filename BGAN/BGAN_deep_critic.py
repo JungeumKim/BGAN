@@ -6,7 +6,7 @@ from IPython.core.debugger import set_trace
 
 from BGAN import Critic as BGAN_CRITIC
 from BGAN import Generator as BGAN_GENERATOR
-from DeepSet_nets import Auto_ss
+from _nets.DeepSet_nets import Auto_ss
 from BGAN import BGAN
 
 
@@ -14,12 +14,12 @@ class Critic(BGAN_CRITIC):
 
 
     def __init__(self,theta_dim=2,x_dim=2,  f1_dim=2,f2_dim=2,
-                 d_hidden = [128,128,128], leaky=0.1):
+                 d_hidden = [128,128,128], leaky=0.1, aggregation=True,x_length=None ):
         super().__init__(input_dim = theta_dim,
                          cond_dim = f1_dim + f2_dim,
                          d_hidden = d_hidden
                          )
-        self.ss = Auto_ss(f1_dim=f1_dim, f2_dim=f2_dim, x_dim=x_dim)
+        self.ss = Auto_ss(f1_dim=f1_dim, f2_dim=f2_dim, x_dim=x_dim, aggregation=aggregation, x_length=x_length)
 
     def forward(self, x, context):
 
@@ -29,8 +29,8 @@ class Critic(BGAN_CRITIC):
 class Generator(BGAN_GENERATOR):
 
     def __init__(self, x_dim=2, theta_dim = 2,
-                f1_dim=2,f2_dim=2, leaky=0.1,
-                 d_hidden = [128,128,128]):
+                f1_dim=2,f2_dim=2, leaky=0.1,x_length=None, 
+                 d_hidden = [128,128,128], aggregation=True):
         
         super().__init__(d_hidden=d_hidden,
                          theta_dim=theta_dim,
@@ -40,7 +40,7 @@ class Generator(BGAN_GENERATOR):
         
         self.d_cond = f1_dim + f2_dim
         
-        self.ss = Auto_ss(f1_dim=f1_dim, f2_dim=f2_dim, x_dim=x_dim)
+        self.ss = Auto_ss(f1_dim=f1_dim, f2_dim=f2_dim, x_dim=x_dim, aggregation=aggregation, x_length=x_length)
 
 
     def forward(self, context, noise = None):
@@ -56,7 +56,7 @@ class DBGAN(BGAN):
                  f1_dim=2, f2_dim=5, 
                  device="cuda",epoch=150, batch_size = 200, 
                  seed=1234, d_hidden = 128,
-                 critic_lr = 0.001, generator_lr = 0.001,
+                 critic_lr = 0.001, generator_lr = 0.001,aggregation=True,
                  *args, **kwargs):
         super().__init__(simulator, theta_dim, x_dim, x_length,
                  device=device,epoch=epoch, batch_size = batch_size, d_hidden=d_hidden,
@@ -67,7 +67,9 @@ class DBGAN(BGAN):
                                    theta_dim = theta_dim,
                                    f1_dim=f1_dim, 
                                    f2_dim=f2_dim,
-                                   d_hidden = [d_hidden,d_hidden,d_hidden]
+                                   d_hidden = [d_hidden,d_hidden,d_hidden],
+                                   aggregation=aggregation,
+                                   x_length=x_length
                                    )
         
         self.critic = Critic(
@@ -75,6 +77,8 @@ class DBGAN(BGAN):
                              f1_dim=f1_dim,
                              f2_dim=f2_dim,
                              x_dim = x_dim,
-                             d_hidden = [d_hidden,d_hidden,d_hidden])
+                             d_hidden = [d_hidden,d_hidden,d_hidden],
+                             aggregation=aggregation,
+                             x_length=x_length)
         self.generator.to(device)        
         self.critic.to(device)

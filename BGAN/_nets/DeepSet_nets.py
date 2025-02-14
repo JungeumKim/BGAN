@@ -51,19 +51,21 @@ class DeepSets(nn.Module):
         return out
 
 class Auto_ss(nn.Module):
-    def __init__(self,  f1_dim=2, f2_dim=2, device="cuda", x_dim=2,
+    def __init__(self, x_length=None, f1_dim=2, f2_dim=2, device="cuda", x_dim=2,
                  factor=64, f1_layers =3,
-                 common_factor=64,common_layers = 3, *args, **kwargs):
+                 common_factor=64,common_layers = 3, aggregation=True , *args, **kwargs):
         super().__init__()
         self.f1_dim = f1_dim
         self.f2_dim= f2_dim
+        if not aggregation:
+            assert x_length is not None
         if  self.f1_dim>0:
             self.f1 = DeepSets(dim_x=x_dim,
                                dim_ss=self.f1_dim,
                                nextnet_factor=factor,
                                nextnet_layers=f1_layers,
                                common_factor= common_factor,
-                               common_layers = common_layers,
+                               common_layers = common_layers,aggregation=aggregation,
                                bn_last=False,# this bn_last=False is a super important argument!!
                                device=device)
         if  self.f2_dim>0:
