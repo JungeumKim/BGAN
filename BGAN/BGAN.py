@@ -2,7 +2,7 @@
 Major changes:
     - Activation: ReLU -> Leaky_ReLU(0.1)
 """
-
+from _utils.python_util import mmd
 from IPython.core.debugger import set_trace
 import numpy as np
 import torch
@@ -12,15 +12,6 @@ import torch.nn.functional as F
 from time import time
 
 import numpy as np
-from sklearn.metrics.pairwise import rbf_kernel
-
-def mmd(X, Y, gamma=1.0):
-    """MMD using RBF kernel (k(x,y) = exp(-gamma * ||x-y||^2 / 2))"""
-    XX = rbf_kernel(X, X, gamma)
-    YY = rbf_kernel(Y, Y, gamma)
-    XY = rbf_kernel(X, Y, gamma)
-    #set_trace()
-    return XX.mean() + YY.mean() - 2 * XY.mean()
 
 
 class Generator(nn.Module):
@@ -45,6 +36,8 @@ class Generator(nn.Module):
 
     def forward(self, context, noise = None):
         # context: conditioning variable.
+        if len(context.shape)>2:
+            context = context.view(context.shape[0],-1)
         if noise is None:
             noise = torch.randn(context.size(0), self.d_noise).to(context.device)
         #set_trace()
@@ -67,13 +60,15 @@ class Critic(nn.Module):
         self.activation = nn.LeakyReLU(leaky)
 
     def forward(self, x, context):
-
+        if len(context.shape)>2:
+            context = context.view(context.shape[0],-1)
         x = torch.cat([x, context], -1)
         for layer in self.layers[:-1]:
             x = (self.activation(layer(x)))
         return self.layers[-1](x)
 
     def gradient_penalty(self, x, x_hat, context):
+        #return gradient_penalty(self, x, x_hat)
 
         alpha = torch.rand(x.size(0)).unsqueeze(1).to(x.device)
         interpolated = x * alpha + x_hat * (1 - alpha)
@@ -121,7 +116,7 @@ class BGAN():
               critic_steps = 15,
               n_iter=1000, start_epoch=1, end_epoch=None):
         
-        if end_epoch==None: end_epoch = self.epoch
+        if end_epoch==None: end_epoch = self.epoch+1
             
         for epoch in range(start_epoch, end_epoch+1):
             print(f"Epoch {epoch}")
@@ -136,8 +131,7 @@ class BGAN():
             for iter in range(n_iter):
                 x, context = self.simulator(batch_size = self.batch_size,np_random = self.np_random)
                 x, context = x.to(self.device), context.to(self.device)
-                if len(context.shape)>2:
-                    context = context.view(-1,self.x_dim*self.x_length)
+
 
                 self.generator.zero_grad()
                 self.critic.zero_grad()
