@@ -3,12 +3,12 @@ This is code for  Adversarial Bayesian Simulation (Yuexi Wang, Veronika Rockova)
 """
 
 from IPython.core.debugger import set_trace
-from _nets.basic_nets import  MLP,DeepSets,BiRNN
+
 from BGAN import Critic as BGAN_CRITIC
 from BGAN import Generator as BGAN_GENERATOR
+from DeepSet_nets import Auto_ss
 from BGAN import BGAN
-import torch
-import torch.nn as nn
+
 
 class Critic(BGAN_CRITIC):
 
@@ -48,38 +48,6 @@ class Generator(BGAN_GENERATOR):
         return super().forward(f_context, noise)
 
 
-class Auto_ss(nn.Module):
-    def __init__(self,  f1_dim=2, f2_dim=2, device="cuda", x_dim=2,
-                 factor=64, f1_layers =3,*args, **kwargs):
-        super().__init__()
-        self.f1_dim = f1_dim
-        self.f2_dim= f2_dim
-        if  self.f1_dim>0:
-            self.f1 = DeepSets(dim_x=x_dim,
-                               dim_ss=self.f1_dim,
-                               factor=factor, 
-                               num_layers=f1_layers, 
-                               bn_last=False,# this bn_last=False is a super important argument!!
-                               device=device)
-        if  self.f2_dim>0:
-            self.f2 = BiRNN(input_size=x_dim,
-                            hidden_size=512,
-                            num_layers=1,
-                            xdim=self.f2_dim, 
-                            bn_last=False # this bn_last=False is a super important argument!!
-                            )
-
-        self.device=device
-        self.to(device)
-
-    def forward(self, x):
-        if self.f1_dim>0 and  self.f2_dim ==0:
-            return self.f1(x)
-        elif self.f1_dim==0 and  self.f2_dim >0:
-            return self.f2(x)
-        else:
-            x= torch.cat([self.f1(x),self.f2(x)], 1)
-            return x
 
 
 class DBGAN(BGAN):
