@@ -95,7 +95,7 @@ class DBGAN(BGAN):
                  critic_lr=critic_lr, generator_lr = generator_lr,
                  seed=seed)
 
-        self.generator = Generator(x_dim, x_length,
+        self.generator = Generator(x_dim,
                                    theta_dim = theta_dim,
                                    f1_dim=f1_dim, 
                                    f2_dim=f2_dim,
@@ -108,4 +108,5 @@ class DBGAN(BGAN):
                              f2_dim=f2_dim,
                              x_dim = x_dim,
                              d_hidden = [d_hidden,d_hidden,d_hidden])
-        
+        self.generator.to(device)        
+        self.critic.to(device)
