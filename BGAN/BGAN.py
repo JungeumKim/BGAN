@@ -116,7 +116,8 @@ class BGAN():
               critic_steps = 15,
               n_iter=1000, start_epoch=1, end_epoch=None):
         if true_thetas is not None: 
-            std_thetas = true_thetas.std(dim=0, unbiased=True)  # Shape: (k,)
+            std_thetas = np.std(true_thetas, axis=0, ddof=1) 
+            #std_thetas = true_thetas.std(0, unbiased=True)  # Shape: (k,)
         
         if end_epoch==None: end_epoch = self.epoch+1
             
