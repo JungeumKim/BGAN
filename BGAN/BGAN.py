@@ -115,6 +115,8 @@ class BGAN():
               critic_gp_factor = 5,
               critic_steps = 15,
               n_iter=1000, start_epoch=1, end_epoch=None):
+        if true_thetas is not None: 
+            std_thetas = true_thetas.std(dim=0, unbiased=True)  # Shape: (k,)
         
         if end_epoch==None: end_epoch = self.epoch+1
             
@@ -158,7 +160,9 @@ class BGAN():
                     
                     if true_thetas is not None:
                         with torch.no_grad():
-                            dist_quality = mmd(true_thetas,self.generator(true_x).cpu())
+                            # Normalize both matrices by the computed std deviation
+                            dist_quality = mmd(true_thetas/ std_thetas,
+                                               self.generator(true_x).cpu()/ std_thetas )
                         self.qualities.append({"epoch": epoch, 
                                                "iter":iter, 
                                                "mmd":round(dist_quality,3),
