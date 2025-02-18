@@ -1,4 +1,5 @@
 import numpy as np
+from IPython.core.debugger import set_trace
 
 def integrate(a0 = [1],
              b0 = [0.01],
@@ -54,10 +55,11 @@ def integrate(a0 = [1],
 
         x_prev, y_prev = x_new,y_new
 
-    return np.column_stack(x),np.column_stack(y)
+    x,y = np.column_stack(x),np.column_stack(y) 
+    return np.stack((x,y), axis=1) # len(a0) x 2 x 201
 
 def simulate(batch_size = 100,np_random=None, seed=1234,x0=100, y0=50,
-             u_up=1.2, u_down=0.8,n_steps=200):
+             u_up=1.2, u_down=0.8,n_steps=200, n_iid=1, as_torch = False, device="cpu"):
     if np_random is None:
         np_random = np.random.RandomState(seed)
 
@@ -66,7 +68,19 @@ def simulate(batch_size = 100,np_random=None, seed=1234,x0=100, y0=50,
     c = np_random.uniform(low=0, high=1, size=batch_size)
     d = np_random.uniform(low=0, high=0.1, size=batch_size)
 
-    x,y = integrate(a0 = a,b0 = b,c0 = c, d0 = d, x0=x0, y0=y0,
-             timestep=0.1, np_random=np_random, u_up=u_up, u_down=u_down, n_steps=n_steps)
+    x = integrate(a0 = np.repeat(a, n_iid), # aaa,a'a'a', a''a''a'', a'''a'''a''' if n_iid = 3 and batch_size=4
+                    b0 = np.repeat(a, n_iid),
+                    c0 = np.repeat(a, n_iid), 
+                    d0 = np.repeat(a, n_iid), 
+                    x0=x0, y0=y0,
+                    timestep=0.1, np_random=np_random, u_up=u_up, u_down=u_down, n_steps=n_steps)
+    
     thetas = np.column_stack([a,b,c,d])
-    return thetas, x,y
+    
+    # x,y: from n_iid*batch_size x (n_steps+1) to batch_size x n_iid x 2 x (n_steps+1)
+    # x.reshape(n_iid,batch_size,-1) makes it as n_iid x batch_size x 2 x (n_steps+1), and so need to rotate.
+   
+    x = x.reshape(batch_size,n_iid,2, -1)
+    if as_torch: 
+        x = torch.tensor(x).float().to(device)
+    return thetas, x# data

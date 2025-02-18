@@ -2,7 +2,7 @@
 Major changes:
     - Activation: ReLU -> Leaky_ReLU(0.1)
 """
-from _utils.python_util import mmd
+from _utils.python_util import mmd, mse
 from IPython.core.debugger import set_trace
 import numpy as np
 import torch
@@ -85,7 +85,7 @@ class BGAN():
 
     def __init__(self, simulator, theta_dim, x_dim, x_length,
                  device="cuda",epoch=300, batch_size = 200, d_hidden=128,
-                 critic_lr=0.001, generator_lr = 0.001,
+                 critic_lr=0.001, generator_lr = 0.001, lr_decay = 0.99, 
                  seed=1234, *args, **kwargs):
 
 
@@ -111,10 +111,12 @@ class BGAN():
         self.generator_lr = generator_lr
         self.qualities = []
         
+        self.lr_decay = lr_decay
+        
     def train(self, true_x=None, true_thetas=None,
               critic_gp_factor = 5,
               critic_steps = 15,
-              n_iter=1000, start_epoch=1, end_epoch=None):
+              n_iter=1000, start_epoch=1, end_epoch=None, msr="mmd"):
         if true_thetas is not None: 
             std_thetas = np.std(true_thetas, axis=0, ddof=1) 
             #std_thetas = true_thetas.std(0, unbiased=True)  # Shape: (k,)
@@ -123,8 +125,9 @@ class BGAN():
             
         for epoch in range(start_epoch, end_epoch+1):
             print(f"Epoch {epoch}")
-            opt_generator = optim.Adam(self.generator.parameters(), lr=self.generator_lr*(0.99**epoch))
-            opt_critic = optim.Adam(self.critic.parameters(), lr=self.critic_lr*(0.99**epoch))
+            lr_decay = 0.99 if epoch < 100 else self.lr_decay
+            opt_generator = optim.Adam(self.generator.parameters(), lr=self.generator_lr*(lr_decay**epoch))
+            opt_critic = optim.Adam(self.critic.parameters(), lr=self.critic_lr*(lr_decay**epoch))
 
             # train loop
             WD_train, WD_test= 0, 0
@@ -161,12 +164,16 @@ class BGAN():
                     
                     if true_thetas is not None:
                         with torch.no_grad():
+                            if msr=="mmd":
                             # Normalize both matrices by the computed std deviation
-                            dist_quality = mmd(true_thetas/ std_thetas,
+                                dist_quality = mmd(true_thetas/ std_thetas,
                                                self.generator(true_x).cpu()/ std_thetas )
+                            else:
+                                dist_quality = mse(true_thetas,self.generator(true_x).cpu())
+                                
                         self.qualities.append({"epoch": epoch, 
                                                "iter":iter, 
-                                               "mmd":round(dist_quality,3),
+                                               msr:round(dist_quality,3),
                                                "loss":round(loss.item(),3)})
                         
             WD_train /= n_iter

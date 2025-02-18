@@ -22,3 +22,7 @@ def mmd(X, Y, gamma=1.0):
     XY = rbf_kernel(X, Y, gamma)
     #set_trace()
     return XX.mean() + YY.mean() - 2 * XY.mean()
+
+def mse(theta, data): # theta: (k,) vector, data: (nxk) matrix.
+    se = (theta.view(-1,k)-data)**2
+    return se.mean(0)
