@@ -121,18 +121,19 @@ class DBGAN_mix(DBGAN):
 
     def mixed_forward_gen(self, context, noise=None):
         if noise is None:
-            noise = torch.randn(context.size(0), self.generator.z_dim).to(context.device)
+            noise = torch.randn(context.size(0), self.generator.d_noise).to(context.device)
 
-        reshaped_noise = noise.unsqueeze(1).expand(context.shape[0], context.shape[1], self.generator.z_dim)
+        reshaped_noise = noise.unsqueeze(1).expand(context.shape[0], context.shape[1], self.generator.d_noise)
         f_context = self.generator.ss(torch.cat([context, reshaped_noise], dim=-1))
-
-        return super(DBGAN.Generator, self.generator).forward(f_context, noise)
+        return super(type(self.generator), self.generator).forward(f_context, noise)
+    
+        #return super(DBGAN.generator, self.generator).forward(f_context, noise)
 
     def mixed_forward_critic(self, x, context):
         reshaped_x = x.unsqueeze(1).expand(context.shape[0], context.shape[1], -1)
         f_context = self.critic.ss(torch.cat([context, reshaped_x], dim=-1))
 
-        return super(DBGAN.Critic, self.critic).forward(x, f_context)
+        return super(type(self.critic), self.critic).forward(x, f_context)
 
 
 '''
