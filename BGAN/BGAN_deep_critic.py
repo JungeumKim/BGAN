@@ -13,14 +13,15 @@ class Critic(BGAN_CRITIC):
     def __init__(self,theta_dim=2,x_dim=2,  f1_dim=2,f2_dim=2,
                  d_hidden = [128,128,128], leaky=0.1, aggregation=True,x_length=None, 
                  factor=64, f1_layers =3,
-                 common_factor=64,common_layers = 3,
+                 common_factor=64,common_layers = 3,device ="cuda"
                  ):
         super().__init__(input_dim = theta_dim,
                          cond_dim = f1_dim + f2_dim,
                          d_hidden = d_hidden)
         self.ss = Auto_ss(f1_dim=f1_dim, f2_dim=f2_dim, x_dim=x_dim, aggregation=aggregation, x_length=x_length,
                                    factor=factor, f1_layers =f1_layers,
-                                   common_factor=common_factor,common_layers = common_layers)
+                                   common_factor=common_factor,common_layers = common_layers,
+                                    device = device)
     def forward(self, x, context):
         f_context = self.ss(context)# .unsqueeze(-1))
         return super().forward(x, f_context)
@@ -31,7 +32,7 @@ class Generator(BGAN_GENERATOR):
                 f1_dim=2,f2_dim=2, leaky=0.1,x_length=None, 
                  d_hidden = [128,128,128], aggregation=True,
                 factor=64, f1_layers =3,
-                 common_factor=64,common_layers = 3):
+                 common_factor=64,common_layers = 3, device="cuda"):
         
         super().__init__(d_hidden=d_hidden,
                          theta_dim=theta_dim,
@@ -41,7 +42,8 @@ class Generator(BGAN_GENERATOR):
         self.d_cond = f1_dim + f2_dim
         self.ss = Auto_ss(f1_dim=f1_dim, f2_dim=f2_dim, x_dim=x_dim, aggregation=aggregation, x_length=x_length,
                            factor=factor, f1_layers =f1_layers,
-                                   common_factor=common_factor,common_layers = common_layers)
+                                   common_factor=common_factor,common_layers = common_layers,device=device)
+
 
     def forward(self, context, noise = None):
         f_context = self.ss(context)
@@ -70,7 +72,8 @@ class DBGAN(BGAN):
                                    aggregation=aggregation,
                                    x_length=x_length,
                                    factor=factor, f1_layers =f1_layers,
-                                   common_factor=common_factor,common_layers = common_layers
+                                   common_factor=common_factor,common_layers = common_layers,
+                                   device = device
                                    )
         self.critic = Critic(
                              theta_dim=theta_dim,
@@ -81,7 +84,8 @@ class DBGAN(BGAN):
                              aggregation=aggregation,
                              x_length=x_length,
                              factor=factor, f1_layers =f1_layers,
-                             common_factor=common_factor,common_layers = common_layers)
+                             common_factor=common_factor,common_layers = common_layers,
+                            device = device)
         self.generator.to(device)        
         self.critic.to(device)
 
@@ -109,12 +113,12 @@ class DBGAN_mix(DBGAN):
                                   x_dim=x_dim + theta_dim, #---> This is the only change
                                   aggregation=aggregation, x_length=x_length,
                                    factor=factor, f1_layers =f1_layers,
-                                   common_factor=common_factor,common_layers = common_layers)#
+                                   common_factor=common_factor,common_layers = common_layers,device=device)#
         self.generator.ss =  Auto_ss(f1_dim=f1_dim, f2_dim=f2_dim,
                                      x_dim=x_dim+theta_dim, #---> This is the only change
                                      aggregation=aggregation, x_length=x_length,
                                     factor=factor, f1_layers =f1_layers,
-                                   common_factor=common_factor,common_layers = common_layers)
+                                   common_factor=common_factor,common_layers = common_layers,device=device)
         # Override the forward methods
         self.generator.forward = self.mixed_forward_gen.__get__(self.generator, Generator)
         self.critic.forward = self.mixed_forward_critic.__get__(self.critic, Critic)
