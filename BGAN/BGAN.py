@@ -164,13 +164,15 @@ class BGAN():
                     
                     if true_thetas is not None:
                         with torch.no_grad():
-                            if msr=="mmd":
+                            try:
+                                if msr=="mmd":
                             # Normalize both matrices by the computed std deviation
-                                dist_quality = mmd(true_thetas/ std_thetas,
+                                    dist_quality = mmd(true_thetas/ std_thetas,
                                                self.generator(true_x).cpu()/ std_thetas )
-                            else:
-                                dist_quality = mse(true_thetas,self.generator(true_x).cpu())
-                                
+                                else:
+                                    dist_quality = mse(true_thetas,self.generator(true_x).cpu())
+                            except:
+                                dist_quality = 0 
                         self.qualities.append({"epoch": epoch, 
                                                "iter":iter, 
                                                msr:round(dist_quality,3),
