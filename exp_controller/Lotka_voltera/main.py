@@ -85,7 +85,7 @@ def main(args):
         for j in range(int(args.epoch/BY)):
             method.train(true_x=X0_rep, true_thetas=true_thetas, 
                          msr = "mse", n_iter = args.n_iter,
-                         start_epoch=j*BY+1, end_epoch=By*(j+1)
+                         start_epoch=j*BY+1, end_epoch=BY*(j+1)
                          ) 
             plot(method,X0_rep, Theta0,
                  net_path+f"/net_id{j}_epoch{BY*(j+1)}.png")
