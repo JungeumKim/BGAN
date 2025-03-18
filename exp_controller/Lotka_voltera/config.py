@@ -7,23 +7,17 @@ def parse_args(args, name_space):
     parser = argparse.ArgumentParser(description='Arguments.')
     parser.add_argument('--worktree',
                         #default= "/home/kim2712/Desktop/research/BGAN/BGAN",
-                        #default= "/home/kim2712/Desktop/research/BGAN/BGAN/worktrees/bgan_4e83798/BGAN", : original exp
-                        default= "/home/kim2712/Desktop/research/BGAN/BGAN/worktrees/bgan_1839755/BGAN", #: after double deepset made
+                        default= "/home/kim2712/Desktop/research/BGAN/BGAN/worktrees/bgan_54d5dd0/BGAN",
                         help = "parent directory")
     parser.add_argument('--exp_dir', default = "./",  help= 'global path')
     parser.add_argument('--device', default = "cuda",  help= ' ')    
     parser.add_argument('--method', default = "deepset",  help= ' ')
-    parser.add_argument('--random_repeat', type=int, default=200, help=' ')
+    parser.add_argument('--random_repeat', type=int, default=5, help=' ')
 
-    parser.add_argument('--epoch', type=int, default = 200, help= ' ')
-    parser.add_argument('--n_iter', type=int, default = 100, help= ' ')
+    parser.add_argument('--epoch', type=int, default = 1000, help= ' ')
+    parser.add_argument('--n_iter', type=int, default = 500, help= ' ')
     parser.add_argument('--batch_size', type=int, default = 128, help= ' ')
 
-    #parser.add_argument('--nu', type=int, default = 25, help= ' ')
-    #parser.add_argument('--sigma0_sq', type=float, default = 1)
-    #parser.add_argument('--mu0', type=float, default = 0)
-    #parser.add_argument('--kappa', type=int, default = 2, help= ' ')
-    
     parser.add_argument('--seed', type=int, default = 12345, help= ' ')
     parser.add_argument('--lr', type=float, default = 0.0001, help= ' ')
     parser.add_argument('--n_steps', type=int, default=200, help=' ')
