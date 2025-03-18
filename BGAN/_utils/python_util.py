@@ -9,7 +9,7 @@ def set_seed(seed):
     torch.cuda.manual_seed_all(seed)         # Sets the seed for all GPUs (if using multiple GPUs)
     random.seed(seed)                        # Set the seed for Python's built-in random module
     np.random.seed(seed)                     # Set the seed for NumPy's random number generator
-    
+
     # Ensures deterministic behavior for some operations
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
@@ -23,6 +23,6 @@ def mmd(X, Y, gamma=1.0):
     #set_trace()
     return XX.mean() + YY.mean() - 2 * XY.mean()
 
-def mse(theta, data): # theta: (k,) vector, data: (nxk) matrix.
-    se = (theta.view(-1,k)-data)**2
+def mse(theta, data): # theta: (n, k) vector, data: (n, k) matrix.
+    se = np.sum((theta-data)**2,1)
     return se.mean(0)

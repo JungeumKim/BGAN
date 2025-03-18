@@ -113,12 +113,15 @@ class BGAN():
         
         self.lr_decay = lr_decay
         
-    def train(self, true_x=None, true_thetas=None,
+    def train(self, true_x=None, true_thetas=None, theta_normalization=True,
               critic_gp_factor = 5,
               critic_steps = 15,
               n_iter=1000, start_epoch=1, end_epoch=None, msr="mmd"):
-        if true_thetas is not None: 
-            std_thetas = np.std(true_thetas, axis=0, ddof=1) 
+        if true_thetas is not None:
+            if theta_normalization:
+                std_thetas = np.std(true_thetas, axis=0, ddof=1)
+            else:
+                std_thetas = 1.0
             #std_thetas = true_thetas.std(0, unbiased=True)  # Shape: (k,)
         
         if end_epoch==None: end_epoch = self.epoch+1
@@ -141,7 +144,7 @@ class BGAN():
 
                 self.generator.zero_grad()
                 self.critic.zero_grad()
-
+                #set_trace()
                 x_hat = self.generator(context)
                 critic_x_hat = self.critic(x_hat, context).mean()
 
@@ -170,7 +173,8 @@ class BGAN():
                                     dist_quality = mmd(true_thetas/ std_thetas,
                                                self.generator(true_x).cpu()/ std_thetas )
                                 else:
-                                    dist_quality = mse(true_thetas,self.generator(true_x).cpu())
+                                    dist_quality =mse(true_thetas,self.generator(true_x).cpu().numpy())
+
                             except:
                                 dist_quality = 0 
                         self.qualities.append({"epoch": epoch, 
