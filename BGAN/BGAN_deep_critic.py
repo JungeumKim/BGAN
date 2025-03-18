@@ -28,7 +28,7 @@ class Critic(BGAN_CRITIC):
 
 class Generator(BGAN_GENERATOR):
 
-    def __init__(self, x_dim=2, theta_dim = 2,
+    def __init__(self, x_dim=2, theta_dim = 2,z_dim = 2,
                 f1_dim=2,f2_dim=2, leaky=0.1,x_length=None, 
                  d_hidden = [128,128,128], aggregation=True,
                 factor=64, f1_layers =3,
@@ -36,13 +36,13 @@ class Generator(BGAN_GENERATOR):
         
         super().__init__(d_hidden=d_hidden,
                          theta_dim=theta_dim,
-                         z_dim = theta_dim,
+                         z_dim = z_dim,
                          cond_dim = f1_dim + f2_dim,
                          leaky=leaky)
         self.d_cond = f1_dim + f2_dim
         self.ss = Auto_ss(f1_dim=f1_dim, f2_dim=f2_dim, x_dim=x_dim, aggregation=aggregation, x_length=x_length,
                            factor=factor, f1_layers =f1_layers,
-                                   common_factor=common_factor,common_layers = common_layers,device=device)
+                           common_factor=common_factor,common_layers = common_layers,device=device)
 
 
     def forward(self, context, noise = None):
@@ -51,7 +51,7 @@ class Generator(BGAN_GENERATOR):
 
 class DBGAN(BGAN):
 
-    def __init__(self, simulator, theta_dim,  x_dim, x_length,
+    def __init__(self, simulator, theta_dim,  x_dim, x_length,z_dim=None,
                  f1_dim=2, f2_dim=5, 
                  device="cuda",epoch=150, batch_size = 200, 
                  seed=1234, d_hidden = 128,
@@ -59,13 +59,16 @@ class DBGAN(BGAN):
                  factor=64, f1_layers =3,
                  common_factor=64,common_layers = 3,hidden_layers=3,
                  *args, **kwargs):
-        super().__init__(simulator, theta_dim, x_dim, x_length,
+        if z_dim is None:
+            z_dim = theta_dim
+        super().__init__(simulator, theta_dim, x_dim, x_length,z_dim=z_dim,
                  device=device,epoch=epoch, batch_size = batch_size, d_hidden=d_hidden,
                  critic_lr=critic_lr, generator_lr = generator_lr,
                  seed=seed)
 
         self.generator = Generator(x_dim,
                                    theta_dim = theta_dim,
+                                   z_dim = z_dim,
                                    f1_dim=f1_dim, 
                                    f2_dim=f2_dim,
                                    d_hidden = [d_hidden for _ in range(hidden_layers)],
@@ -93,7 +96,7 @@ class DBGAN(BGAN):
 
 class DBGAN_mix(DBGAN):
 
-    def __init__(self, simulator, theta_dim, x_dim, x_length,
+    def __init__(self, simulator, theta_dim, x_dim, x_length, z_dim=None,
                  f1_dim=2, f2_dim=5,
                  device="cuda", epoch=150, batch_size=200,
                  seed=1234, d_hidden=128,
@@ -102,7 +105,10 @@ class DBGAN_mix(DBGAN):
                  common_factor=64, common_layers=3, hidden_layers=3,
                  *args, **kwargs):
         # Properly initialize the parent class (DBGAN)
-        super().__init__(simulator, theta_dim, x_dim, x_length,
+        if z_dim is None:
+            z_dim = theta_dim
+
+        super().__init__(simulator, theta_dim, x_dim, x_length,z_dim = z_dim,
                          f1_dim=f1_dim, f2_dim=f2_dim, device=device, epoch=epoch,
                          batch_size=batch_size, seed=seed, d_hidden=d_hidden,
                          critic_lr=critic_lr, generator_lr=generator_lr,
@@ -115,7 +121,7 @@ class DBGAN_mix(DBGAN):
                                    factor=factor, f1_layers =f1_layers,
                                    common_factor=common_factor,common_layers = common_layers,device=device)#
         self.generator.ss =  Auto_ss(f1_dim=f1_dim, f2_dim=f2_dim,
-                                     x_dim=x_dim+theta_dim, #---> This is the only change
+                                     x_dim=x_dim+z_dim, #---> This is the only change
                                      aggregation=aggregation, x_length=x_length,
                                     factor=factor, f1_layers =f1_layers,
                                    common_factor=common_factor,common_layers = common_layers,device=device)
@@ -128,6 +134,7 @@ class DBGAN_mix(DBGAN):
             noise = torch.randn(context.size(0), self.generator.d_noise).to(context.device)
 
         reshaped_noise = noise.unsqueeze(1).expand(context.shape[0], context.shape[1], self.generator.d_noise)
+        #set_trace()
         f_context = self.generator.ss(torch.cat([context, reshaped_noise], dim=-1))
         return super(type(self.generator), self.generator).forward(f_context, noise)
     

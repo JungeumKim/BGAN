@@ -37,7 +37,7 @@ class Generator(nn.Module):
     def forward(self, context, noise = None):
         # context: conditioning variable.
         if len(context.shape)>2:
-            context = context.view(context.shape[0],-1)
+            context = context.reshape(context.shape[0],-1)
         if noise is None:
             noise = torch.randn(context.size(0), self.d_noise).to(context.device)
         #set_trace()
@@ -61,7 +61,7 @@ class Critic(nn.Module):
 
     def forward(self, x, context):
         if len(context.shape)>2:
-            context = context.view(context.shape[0],-1)
+            context = context.reshape(context.shape[0],-1)
         x = torch.cat([x, context], -1)
         for layer in self.layers[:-1]:
             x = (self.activation(layer(x)))
@@ -83,15 +83,17 @@ class Critic(nn.Module):
 
 class BGAN():
 
-    def __init__(self, simulator, theta_dim, x_dim, x_length,
+    def __init__(self, simulator, theta_dim, x_dim, x_length,z_dim=None,
                  device="cuda",epoch=300, batch_size = 200, d_hidden=128,
                  critic_lr=0.001, generator_lr = 0.001, lr_decay = 0.99, 
                  seed=1234, *args, **kwargs):
 
+        if z_dim is None: z_dim = theta_dim
+
 
         self.generator = Generator(d_hidden = [d_hidden,d_hidden,d_hidden],
                                    theta_dim = theta_dim,
-                                   z_dim = theta_dim,
+                                   z_dim = z_dim,
                                    cond_dim=x_dim*x_length)
 
         self.critic = Critic(

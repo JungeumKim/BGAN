@@ -76,7 +76,8 @@ class Auto_ss(nn.Module):
                             hidden_size=512,
                             num_layers=1,
                             xdim=self.f2_dim,
-                            bn_last=False # this bn_last=False is a super important argument!!
+                            bn_last=False,
+                            device=device# this bn_last=False is a super important argument!!
                             )
 
         self.device=device
