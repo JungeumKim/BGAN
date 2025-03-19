@@ -66,12 +66,13 @@ class DBGAN(BGAN):
                  factor=64, f1_layers =3,
                  common_factor=64,common_layers = 3,hidden_layers=3,
                  *args, **kwargs):
+
         if z_dim is None:
             z_dim = theta_dim
         super().__init__(simulator, theta_dim, x_dim, x_length,z_dim=z_dim,
                  device=device,epoch=epoch, batch_size = batch_size, d_hidden=d_hidden,
                  critic_lr=critic_lr, generator_lr = generator_lr,
-                 seed=seed)
+                 seed=seed, LSTM = (f2_dim >0))
 
         self.generator = Generator(x_dim,
                                    theta_dim = theta_dim,

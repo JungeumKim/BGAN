@@ -10,6 +10,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from time import time
+from contextlib import nullcontext
+
 
 import numpy as np
 
@@ -94,7 +96,7 @@ class BGAN():
     def __init__(self, simulator, theta_dim, x_dim, x_length,z_dim=None,
                  device="cuda",epoch=300, batch_size = 200, d_hidden=128,
                  critic_lr=0.001, generator_lr = 0.001, lr_decay = 0.99, 
-                 seed=1234, *args, **kwargs):
+                 seed=1234, LSTM = False, *args, **kwargs):
 
         if z_dim is None: z_dim = theta_dim
 
@@ -122,6 +124,12 @@ class BGAN():
         self.qualities = []
         
         self.lr_decay = lr_decay
+        self.use_lstm = LSTM
+        
+    def CNN_context_giver(self):
+        return torch.backends.cudnn.flags(enabled=False) if self.use_lstm else nullcontext()
+
+        
         
     def train(self, true_x=None, true_thetas=None, theta_normalization=True,
               critic_gp_factor = 5,
@@ -154,23 +162,26 @@ class BGAN():
 
                 self.generator.zero_grad()
                 self.critic.zero_grad()
-                #set_trace()
+
                 x_hat = self.generator(context)
                 critic_x_hat = self.critic(x_hat, context).mean()
 
 
                 if n_critic < critic_steps:
+
                     critic_x = self.critic(x, context).mean()
                     WD = critic_x - critic_x_hat
                     loss = - WD
-                    loss += critic_gp_factor * self.critic.gradient_penalty(x, x_hat, context)
-                    loss.backward()
+                    with self.CNN_context_giver():
+                        loss += critic_gp_factor * self.critic.gradient_penalty(x, x_hat, context)
+                        loss.backward()
                     opt_critic.step()
                     WD_train += WD.item()
                     n_critic += 1
 
                 else: #generator 1 step.
                     loss = - critic_x_hat
+                    #with torch.backends.cudnn.flags(enabled=False):
                     loss.backward()
                     opt_generator.step()
                     n_critic = 0 # now, the critic will again be trained.

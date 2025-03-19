@@ -43,13 +43,7 @@ def plot(self, X0_rep, Theta0, save_path=None, show=False):
 
 def main(args):
     print("Input arguments:")
-    for key, val in vars(args).items(): print("{:16} {}".format(key, val))
-
-    ID_ = F"{args.method}"
-    
-    net_path = join(args.exp_dir,F"results/trained_nets/{ID_}")
-    
-    pathlib.Path(net_path).mkdir(parents=True, exist_ok=True)
+    for key, val in vars(args).items(): print("{:16} {}".format(key, val)) 
     
     Theta0 = [1,0.01,0.5,0.01]
     X0 = integrate(a0 = [1],
@@ -59,9 +53,11 @@ def main(args):
                  np_random=None, seed=1234, 
                  n_steps=args.n_steps)
 
-    X0_rep = torch.from_numpy(np.repeat(X0, repeats=200, 
+    X0 = X0.transpose(0, 2, 1)  # Rearrange the dimensions
+
+    X0_rep = torch.from_numpy(np.repeat(X0, repeats=150, 
                                         axis=0)).float().to(args.device)
-    true_thetas = np.repeat([Theta0], repeats=200, axis=0)
+    true_thetas = np.repeat([Theta0], repeats=150, axis=0)
 
 
     def simulator(batch_size, np_random=None, device = args.device, 
@@ -71,30 +67,51 @@ def main(args):
         Thetas = torch.from_numpy(Thetas).float().to(device)
         X = torch.from_numpy(x).float().to(device)
         X = X.clip(0,10**7)
+        X = X.permute(0, 3, 2,1).squeeze(-1)
         return Thetas, X
     
-    for j in range(args.random_repeat):
-        method = BGAN(simulator=simulator,
-              epoch=args.epoch,
-              x_length = args.n_steps+1,
-              x_dim = 2,
-              theta_dim=4,
-              device=args.device
-              )
-        BY = 10
-        for j in range(int(args.epoch/BY)):
-            method.train(true_x=X0_rep, true_thetas=true_thetas, 
-                         msr = "mse", n_iter = args.n_iter,
-                         start_epoch=j*BY+1, end_epoch=BY*(j+1)
-                         ) 
-            plot(method,X0_rep, Theta0,
-                 net_path+f"/net_id{j}_epoch{BY*(j+1)}.png")
+    #for rp in range(args.random_repeat):
+    rp = args.repeat_id
+    np.random.seed(args.seed *(rp+1))
+    torch.manual_seed(args.seed *(rp+1))
 
-        method.save(net_path+f"/net_id{j}.net")
-        print("model saved at")
-        print(net_path+f"/net_id{j}.net")
-        
-        torch.save(method.qualities, net_path+f"/net_id{j}.qualities")
+    net_path = join(args.exp_dir,F"results/{args.method}/net_id{rp}/")
+
+    pathlib.Path(net_path).mkdir(parents=True, exist_ok=True)
+
+    method = BGAN(simulator=simulator,
+          epoch=args.epoch,
+          x_length = args.n_steps+1,
+          x_dim = 2,
+          theta_dim=4,
+          z_dim=4,
+          device=args.device,
+                  
+          critic_lr=args.lr, generator_lr = args.lr,
+
+          batch_size = args.batch_size,
+          f1_dim =3, f2_dim=4,
+          factor=128, f1_layers =2,
+          common_factor=128,
+          common_layers = 2,hidden_layers=2,
+          d_hidden=128
+
+          )
+
+    BY = 10
+    for j in range(int(args.epoch/BY)):
+        method.train(true_x=X0_rep, true_thetas=true_thetas, 
+                     msr = "mse", n_iter = args.n_iter,
+                     start_epoch=j*BY+1, end_epoch=BY*(j+1)
+                     ) 
+        plot(method,X0_rep, Theta0,
+             net_path+f"epoch{BY*(j+1)}.png")
+
+    method.save(net_path+f"net.net")
+    print("model saved at")
+    print(net_path+f"net.net")
+
+    torch.save(method.qualities, net_path+f"qualities.dat")
     
 if __name__ == '__main__':
 
@@ -109,6 +126,7 @@ if __name__ == '__main__':
     
     if args.method=="deepset": 
         from BGAN_deep_critic import DBGAN_mix as BGAN
+        #torch.backends.cudnn.enabled = False #since f2_dim>0: i.e., LSTM is used.
         
     else:
         from BGAN import BGAN
