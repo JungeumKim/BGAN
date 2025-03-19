@@ -3,14 +3,18 @@ import torch
 import torch.nn as nn
 from IPython.core.debugger import set_trace
 
-
 class DeepSets(nn.Module):
     def __init__(self, dim_x, dim_ss, x_length=None, nextnet_factor=16, nextnet_layers=2,
                  common_factor=64,common_layers = 3, aggregation=True, #use_nextnet=True, ##[mean, colbind]
                  device="cuda",
                  bn_last=True):
         super(DeepSets, self).__init__()
-
+        '''
+            original version:
+                input: x: [batch, length, dim_x]
+                common_feature_net output: phi: [batch * length, dim_ss] -> aggregated to [batch, dim_ss]
+                next_net output: out: [batch, dim_ss]
+        '''
         self.common_feature_net = MLP(device=device,
                                       dim=dim_x,
                                       z_dim = dim_ss,

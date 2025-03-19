@@ -82,7 +82,15 @@ class Critic(nn.Module):
 
 
 class BGAN():
+    '''
+    Assumption:
+        The data X: batch_size x x_length x x_dim :
+            It will later be reshaped to batch_size x x_dim*x_length.
+            It can handle any dimension of X: batch_size x a x b x c x d ...
+                since it flattens it to a two-dim matrix.
+        The parameter: batch_size x theta_dim
 
+    '''
     def __init__(self, simulator, theta_dim, x_dim, x_length,z_dim=None,
                  device="cuda",epoch=300, batch_size = 200, d_hidden=128,
                  critic_lr=0.001, generator_lr = 0.001, lr_decay = 0.99, 

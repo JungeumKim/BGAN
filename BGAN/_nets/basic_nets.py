@@ -20,7 +20,8 @@ class BiRNN(nn.Module):
 
     def forward(self, x):
         '''
-        input x: (batch_size x T x dim_x)
+        input x: (batch_size x T x input_size)
+        outpt (batch_size x xdim)
         '''
         # Set initial states
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device) # 2 for bidirection
