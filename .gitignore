@@ -4,3 +4,6 @@
 **/replicator_exp/*
 **/developing_notebooks/*
 **/BGAN/worktrees
+**/results/
+exp_controller/Lotka_voltera/config.py
+worktree_maker.init

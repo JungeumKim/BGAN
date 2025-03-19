@@ -1,9 +1,0 @@
-#!/bin/bash
-
-
-commit_ish=e868301 #d8adaa6 #4e83798 #732ca60
-#git version specifier: call and copy the code that it will run with.
-parent=/home/kim2712/Desktop/research/BGAN/BGAN/worktrees 
-path=$parent/bgan_$commit_ish
-git worktree add --detach $path $commit_ish
-
