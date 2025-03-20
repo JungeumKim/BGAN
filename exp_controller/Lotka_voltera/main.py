@@ -106,7 +106,8 @@ def main(args):
                      ) 
         plot(method,X0_rep, Theta0,
              net_path+f"epoch{BY*(j+1)}.png")
-
+        if j % 10 == 0 and j != 0:
+            method.save(net_path+f"epoch{BY*(j+1)}.net")
     method.save(net_path+f"net.net")
     print("model saved at")
     print(net_path+f"net.net")

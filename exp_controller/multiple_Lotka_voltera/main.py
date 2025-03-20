@@ -45,12 +45,6 @@ def main(args):
     print("Input arguments:")
     for key, val in vars(args).items(): print("{:16} {}".format(key, val))
 
-    ID_ = F"{args.method}"
-    
-    net_path = join(args.exp_dir,F"results/trained_nets/{ID_}")
-    
-    pathlib.Path(net_path).mkdir(parents=True, exist_ok=True)
-
     Theta0 = [1, 0.01, 0.5, 0.01]
     X0 = integrate(a0=np.repeat(Theta0[0], args.n_iid),
                    # aaa,a'a'a', a''a''a'', a'''a'''a''' if n_iid = 3 and batch_size=4
@@ -76,10 +70,17 @@ def main(args):
         return Thetas, X
 
     
-    for j in range(args.random_repeat):
-        method = BGAN(simulator=simulator,
+    #for j in range(args.random_repeat):
+    rp = args.repeat_id
+    np.random.seed(args.seed *(rp+1))
+    torch.manual_seed(args.seed *(rp+1))
+    
+    net_path = join(args.exp_dir,F"results/{args.method}/net_id{rp}/")
+    pathlib.Path(net_path).mkdir(parents=True, exist_ok=True)
+    
+    method = BGAN(simulator=simulator,
                                  epoch=args.epoch,
-                                 x_length=args.n_steps + 1,
+                                 x_length=(args.n_steps+1)*args.n_iid,
                                  x_dim=2,
                                  theta_dim=4,
                                  device=args.device,
@@ -89,21 +90,23 @@ def main(args):
                                  common_factor=128,
                                  common_layers=2, hidden_layers=2,
                                  d_hidden=128)
-        BY = 10
-        for j in range(int(args.epoch/BY)):
-            method.train(true_x=X0_rep, true_thetas=true_thetas, 
-                         msr = "mse", n_iter = args.n_iter,
-                         start_epoch=j*BY+1, end_epoch=BY*(j+1)
-                         ) 
-            plot(method,X0_rep, Theta0,
-                 net_path+f"/net_id{j}_epoch{BY*(j+1)}.png")
+    BY = 10
+    for j in range(int(args.epoch/BY)):
+        method.train(true_x=X0_rep, true_thetas=true_thetas, 
+                     msr = "mse", n_iter = args.n_iter,
+                     start_epoch=j*BY+1, end_epoch=BY*(j+1)
+                     ) 
+        plot(method,X0_rep, Theta0,
+             net_path+f"epoch{BY*(j+1)}.png")
+        if j % 10 == 0 and j != 0:
+            method.save(net_path+f"epoch{BY*(j+1)}.net")
 
-        method.save(net_path+f"/net_id{j}.net")
-        print("model saved at")
-        print(net_path+f"/net_id{j}.net")
-        
-        torch.save(method.qualities, net_path+f"/net_id{j}.qualities")
-    
+    method.save(net_path+f"/net.net")
+    print("model saved at")
+    print(net_path+f"net.net")
+
+    torch.save(method.qualities, net_path+f"qualities.dat")
+
 if __name__ == '__main__':
 
     args_one, args_lest = parse_one()
