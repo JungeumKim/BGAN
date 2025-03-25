@@ -57,25 +57,29 @@ def main(args):
     print("Input arguments:")
     for key, val in vars(args).items(): print("{:16} {}".format(key, val)) 
     
-    Theta0 = [1,0.01,0.5,0.01]
-    X0 = integrate(a0 = [1],
-                 b0 = [0.01],
-                 c0 = [0.5],
+    Theta0 = [0.01,0.5,1, 0.01]
+    X0 = integrate(a0 = [0.01],
+                 b0 = [0.5],
+                 c0 = [1],
                  d0 = [0.01],
                  np_random=None, seed=1234, 
                  n_steps=args.n_steps)
     X0 = X0[:,0:2]
     X0 = X0.transpose(0, 2, 1)  # Rearrange the dimensions
-
     X0_rep = torch.from_numpy(np.repeat(X0, repeats=150, 
                                         axis=0)).float().to(args.device)
     true_thetas = np.repeat([Theta0], repeats=150, axis=0)
 
+    datapath = "/Users/kjungeum/PycharmProjects/BGAN/BGAN/_data"
+    Thetas_mat = np.load(datapath + '/Thetas_mat.npy')
+    X_mat = np.load(datapath + '/X_mat.npy')
+    dataset = CustomDataset(Thetas_mat, X_mat)
+    data_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+    loader = infinite_loader(data_loader)
 
     def simulator(batch_size, np_random=None, device = args.device, 
                   n_steps = args.n_steps):
-        Thetas, x = forward_sampler(batch_size,np_random=np_random, 
-                                    n_steps = n_steps)
+        Thetas, x = next(loader)
         x = x[:,:,0:2]
         Thetas = torch.from_numpy(Thetas).float().to(device)
         X = torch.from_numpy(x).float().to(device)
@@ -163,8 +167,10 @@ if __name__ == '__main__':
     else:
         from BGAN import BGAN
 
-    from _data.lotka_voltera_revised import simulate as forward_sampler
-    from _data.lotka_voltera_revised import integrate 
-    
+    #from _data.lotka_voltera_revised import simulate as forward_sampler
+    from _data.lotka_voltera_revised import integrate
+    from _data.dataset import CustomDataset,infinite_loader
+
+    from torch.utils.data import DataLoader
     main(args)
 
