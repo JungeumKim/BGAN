@@ -1,5 +1,5 @@
 import numpy as np
-import torch
+#import torch
 import random
 from IPython.core.debugger import set_trace
 
@@ -94,7 +94,7 @@ def integrate(a0=[0.01],
     return np.stack((X_final, Y_final, T_final), axis=1)
 
 def simulate(batch_size = 100,np_random=None, seed=1234,x0=50, y0=100,
-            n_steps=200, n_iid=1, as_torch = False, device="cpu"):
+            n_steps=200, n_iid=1): #, as_torch = False, device="cpu"):
     if np_random is None:
         np_random = np.random.RandomState(seed)
 
@@ -116,6 +116,6 @@ def simulate(batch_size = 100,np_random=None, seed=1234,x0=50, y0=100,
     # x.reshape(n_iid,batch_size,-1) makes it as n_iid x batch_size x 2 x (n_steps+1), and so need to rotate.
    
     x = x.reshape(batch_size,n_iid,3, -1)
-    if as_torch: 
-        x = torch.tensor(x).float().to(device)
+    #if as_torch: 
+    #    x = torch.tensor(x).float().to(device)
     return thetas, x# data
