@@ -224,11 +224,11 @@ class BGAN():
             X = self.x_normalize(X)
         X = X.to(self.device)
         with torch.no_grad():
-            theta_hat = self.generator(X).to("cpu")
+            theta_hat = self.generator(X)
         if self.normalize:
-            return self.theta_denormalize(theta_hat)
+            return self.theta_denormalize(theta_hat).to("cpu")
         else:
-            return theta_hat
+            return theta_hat.to("cpu")
 
 
     def save(self, path):
