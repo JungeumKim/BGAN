@@ -140,8 +140,14 @@ class DBGAN_mix(DBGAN):
                                     factor=factor, f1_layers =f1_layers,
                                    common_factor=common_factor,common_layers = common_layers,device=device)
         # Override the forward methods
-        self.generator.forward = self.mixed_forward_gen.__get__(self.generator, Generator)
-        self.critic.forward = self.mixed_forward_critic.__get__(self.critic, Critic)
+        def critic_forward_closure(x):
+            return self.mixed_forward_critic(x)
+
+        def generator_forward_closure(x):
+            return self.mixed_forward_gen(x)
+
+        self.generator.forward = generator_forward_closure #self.mixed_forward_gen.__get__(self.generator, Generator)
+        self.critic.forward = critic_forward_closure #self.mixed_forward_critic.__get__(self.critic, Critic)
 
     def mixed_forward_gen(self, context, noise=None):
         if noise is None:
