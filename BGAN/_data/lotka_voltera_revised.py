@@ -100,7 +100,7 @@ def simulate(batch_size = 100,np_random=None, seed=1234,x0=50, y0=100,
 
     a = np_random.uniform(low=0, high=0.1, size=batch_size)
     b = np_random.uniform(low=0, high=1, size=batch_size)
-    c = np_random.uniform(low=0, high=0.2, size=batch_size)
+    c = np_random.uniform(low=0, high=2, size=batch_size)
     d = np_random.uniform(low=0, high=0.1, size=batch_size)
 
     x = integrate(a0 = np.repeat(a, n_iid), # aaa,a'a'a', a''a''a'', a'''a'''a''' if n_iid = 3 and batch_size=4
