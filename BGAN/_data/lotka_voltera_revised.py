@@ -81,7 +81,7 @@ def integrate(a0=[0.01],
     # Impute values to match `time_discrete`
     indices = []  # Collect indices for each batch
     for batch in range(times.shape[1]):  # Loop over each batch
-        indices.append(np.searchsorted(times[:, batch], time_discrete, side="right") - 1)
+        indices.append(np.searchsorted(times[:, batch], time_discrete, side="left") - 1)
     indices = np.array(indices)
     indices = np.clip(indices, 0, len(times) - 1)  # Clip to valid range
 
@@ -89,6 +89,15 @@ def integrate(a0=[0.01],
     X_final = np.array([X[indices[batch], batch] for batch in range(len(indices))])
     Y_final = np.array([Y[indices[batch], batch] for batch in range(len(indices))])
     T_final = np.array([times[indices[batch], batch] for batch in range(len(indices))])
+
+    for batch in range(b_size):
+        x_zero_idx = np.argmax(X_final[batch] == 0)
+        if X_final[batch, x_zero_idx] == 0:
+            X_final[batch, x_zero_idx:] = 0
+
+        y_zero_idx = np.argmax(Y_final[batch] == 0)
+        if Y_final[batch, y_zero_idx] == 0:
+            Y_final[batch, y_zero_idx:] = 0
 
     # Return result: (batch_size x 3 x len(time_discrete))
     return np.stack((X_final, Y_final, T_final), axis=1)
