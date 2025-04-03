@@ -138,17 +138,14 @@ class BGAN():
 
 
 
-    def train(self, true_x=None, true_thetas=None, theta_normalization=True,
+    def train(self, true_x=None, true_thetas=None,
               critic_gp_factor = 5,
               critic_steps = 15,
               n_iter=1000, start_epoch=1, end_epoch=None, msr="mmd"):
         if true_thetas is not None:
-            if theta_normalization:
-                std_thetas = np.std(true_thetas, axis=0, ddof=1)
-            else:
-                std_thetas = 1.0
-            #std_thetas = true_thetas.std(0, unbiased=True)  # Shape: (k,)
-        
+            if self.normalize:
+                true_thetas = self.theta_normalize(true_thetas)
+
         if end_epoch==None: end_epoch = self.epoch+1
             
         for epoch in range(start_epoch, end_epoch+1):
@@ -203,8 +200,7 @@ class BGAN():
                             try:
                                 if msr=="mmd":
                             # Normalize both matrices by the computed std deviation
-                                    dist_quality = mmd(true_thetas/ std_thetas,
-                                               self.generator(true_x).cpu()/ std_thetas )
+                                    dist_quality = mmd(true_thetas, self.sampler(true_x).cpu().numpy())
                                 else:
                                     dist_quality =mse(true_thetas,self.generator(true_x).cpu().numpy())
 
@@ -226,7 +222,7 @@ class BGAN():
         with torch.no_grad():
             theta_hat = self.generator(X)
         if self.normalize:
-            return self.theta_denormalize(theta_hat).to("cpu")
+            return self.theta_denormalize(theta_hat.to("cpu"))#.to("cpu")
         else:
             return theta_hat.to("cpu")
 
