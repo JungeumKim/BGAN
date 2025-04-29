@@ -127,16 +127,18 @@ class BGAN():
         self.use_lstm = LSTM
         self.normalize = normalize
         if self.normalize:
-            assert all(key in self.normalize for key in ["x_mean", "x_std", "theta_mean", "theta_std"])
-            self.x_normalize = lambda X: (X - self.normalize["x_mean"]) / self.normalize["x_std"]
-            self.theta_normalize = lambda theta: (theta - self.normalize["theta_mean"]) / self.normalize["theta_std"]
-            self.theta_denormalize = lambda theta: theta * self.normalize["theta_std"] + self.normalize["theta_mean"]
+            self.normalization_init()
+            
+            
 
-
+    def normalization_init(self):
+        assert all(key in self.normalize for key in ["x_mean", "x_std", "theta_mean", "theta_std"])
+        self.x_normalize = lambda X: (X - self.normalize["x_mean"]) / self.normalize["x_std"]
+        self.theta_normalize = lambda theta: (theta - self.normalize["theta_mean"]) / self.normalize["theta_std"]
+        self.theta_denormalize = lambda theta: theta * self.normalize["theta_std"] + self.normalize["theta_mean"]
+            
     def CNN_context_giver(self):
         return torch.backends.cudnn.flags(enabled=False) if self.use_lstm else nullcontext()
-
-
 
     def train(self, true_x=None, true_thetas=None,
               critic_gp_factor = 5,
@@ -231,11 +233,15 @@ class BGAN():
         # Save the state dictionaries of generator and critic
         torch.save({
             'generator': self.generator.state_dict(),
-            'critic': self.critic.state_dict()
+            'critic': self.critic.state_dict(),
+            'qualities': self.qualities,
+            'normalize': self.normalize            
         }, path)
 
     def load(self, path):
         saved = torch.load(path)
         self.generator.load_state_dict(saved['generator'])
         self.critic.load_state_dict(saved['critic'])
+        self.qualities = saved['qualities']
+        self.normalize = saved['normalize']
 
