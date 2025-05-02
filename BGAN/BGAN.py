@@ -152,7 +152,7 @@ class BGAN():
             
         for epoch in range(start_epoch, end_epoch+1):
             print(f"Epoch {epoch}")
-            lr_decay = 0.99 if epoch < 100 else self.lr_decay
+            lr_decay = self.lr_decay
             opt_generator = optim.Adam(self.generator.parameters(), lr=self.generator_lr*(lr_decay**epoch))
             opt_critic = optim.Adam(self.critic.parameters(), lr=self.critic_lr*(lr_decay**epoch))
 
@@ -244,4 +244,6 @@ class BGAN():
         self.critic.load_state_dict(saved['critic'])
         self.qualities = saved['qualities']
         self.normalize = saved['normalize']
+        if self.normalize:
+            self.normalization_init()
 
